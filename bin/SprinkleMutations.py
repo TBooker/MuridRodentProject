@@ -1,6 +1,10 @@
-import msprime, pyslim, argparse, random
+import msprime, pyslim, argparse, random, subprocess
 import numpy as np
 import re
+
+
+## This function comes courtesy of Peter Ralph, who directed me to it
+## after I posted on the SLiM forum
 
 def remove_mutations(ts, start, end, proportion):
 	'''
@@ -87,6 +91,9 @@ def main():
 			help = "name the output file")
 	args = parser.parse_args()
 
+	bgzipPath = '/home/booker/bin/htslib-1.9/'
+	tabixPath = '/home/booker/bin/htslib-1.9/'
+	
 	config = SLiM(args.input)
 
 	ts = pyslim.load(args.trees).simplify()
@@ -97,7 +104,6 @@ def main():
 
 	mutated = remove_mutations(sprinkled, config.elementStarts, config.elementEnds, 0.0)
 
-
 #	Here we strip out the neutral mutations that were added on top of elements that were already simulated
 
 	haploidSample = np.random.choice(mutated.samples(),args.sample, replace = False)
@@ -107,8 +113,10 @@ def main():
 	with open(args.output, "w") as vcf_file:
 		ts2.write_vcf(vcf_file, 1)
 
-	for ind in pyslim.extract_mutation_metadata(ts2.tables):
-		print(ind)
+	bgzip = [bgzipPath + 'bgzip', args.output]
+	subprocess.call(bgzip)
+	tabix = [tabixPath +'tabix', args.output+'.gz']
+	subprocess.call(tabix)
 
 	return
 #	for tree in ts2.trees():

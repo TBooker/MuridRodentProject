@@ -103,51 +103,74 @@ def genomicArchitechture(sampledRegion, nameDict, simLength, file = '/home/booke
 		genomicElements.append( 'initializeGenomicElement(' + str(k[0]) + ', ' + str(k[1]) +', ' + str(k[2])+ ');' )
 	return genomicElements
 
+def parseDemography(demography):
+	print demography
+	sizes = []
+	times = []
+	for line in open(demography):
+		if line.startswith('N1'):continue
+		elif line.startswith('N'):
+			sizes.append( float(line.strip().split()[1]) )
+		elif line.startswith('t'):
+			times.append( float(line.strip().split()[1]) )
+	for i,j in zip(sizes, times):
+		yield [i,j]
 
 
 def main():
 	parser = argparse.ArgumentParser(description="Generate a simulation config file for SLiM")
- 	parser.add_argument("--N", 
- 			required = True,
- 			dest = "N",
- 			type = int, 
- 			help = "The population size to be simulated")
- 	parser.add_argument("--theta", 
- 			required = True,
- 			dest = "theta",
- 			type = float, 
- 			help = "The population effective mutation rate")
- 	parser.add_argument("--length", 
- 			required = True,
- 			dest = "length",
- 			type = int, 
- 			help = "The length of the simulated chromosome")
- 	parser.add_argument("--rho", 
- 			required = False,
- 			dest = "rho",
- 			type = float, 
- 			help = "The population effective recombination rate. this is optional, if you specify it it will set a uniform recombination rate")
- 	parser.add_argument("--DFE", 
- 			required = False,
- 			dest = "DFE",
- 			type = str, 
- 			help = "Give the file that contains the DFE information")
+	parser.add_argument("--N", 
+			required = True,
+			dest = "N",
+			type = int, 
+			help = "The population size to be simulated")
+	parser.add_argument("--theta", 
+			required = True,
+			dest = "theta",
+			type = float, 
+			help = "The population effective mutation rate")
+	parser.add_argument("--length", 
+			required = True,
+			dest = "length",
+			type = int, 
+			help = "The length of the simulated chromosome")
+	parser.add_argument("--rho", 
+			required = False,
+			dest = "rho",
+			type = float, 
+			help = "The population effective recombination rate. this is optional, if you specify it it will set a uniform recombination rate")
+	parser.add_argument("--DFE", 
+			required = False,
+			dest = "DFE",
+			type = str, 
+			help = "Give the file that contains the DFE information")
 	parser.add_argument("--treeSeq", 
- 			required = False,
- 			dest = "treeSeq",
- 			action = 'store_true', 
- 			help = "Use this flag if you want to make a config file that will be in the TreeSeq format")
+			required = False,
+			dest = "treeSeq",
+			action = 'store_true', 
+			help = "Use this flag if you want to make a config file that will be in the TreeSeq format")
 	parser.add_argument("--generations", 
- 			required = True,
- 			dest = "generations",
- 			type = int, 
- 			help = "the multiple of the popuation size that you want to simualte for")
-
- 	parser.add_argument("-o", 
- 			required = True,
- 			dest = "output",
- 			type =str, 
- 			help = "name the output file")
+			required = True,
+			dest = "generations",
+			type = int, 
+			help = "the multiple of the popuation size that you want to simualte for. If specifying a non-equlbruum demography, the number of generation will be the number you give + N generations ")
+	parser.add_argument("-o", 
+			required = True,
+			dest = "output",
+			type =str, 
+			help = "name the output file")
+	parser.add_argument("--demography", 
+			required = False,
+			dest = "demography",
+			type = str, 
+			help = "Give a file containing the demographic history of the population",
+			default = 'Null')
+	parser.add_argument("--seed", 
+			required = False,
+			dest = "seed",
+			type = int, 
+			help = "Give a random seed for reproducible runs",
+			default = 0)
 	args = parser.parse_args()
 
 ## Now, using a BED file of all the functional elements in the genome, we generate the simulation architechture
@@ -155,7 +178,11 @@ def main():
 	theta = args.theta
 	rho = args.rho
 	N = args.N
-	np.random.seed(123)
+	if args.seed == 0:
+		pass
+	else:
+		np.random.seed(args.seed)
+
 	generations = args.N * args.generations
 	sampledRegion = positionSampler(simLength)
 	mutationTypes, genomicElementTypes, genomicElementKey = DFEparser('/home/booker/work/MouseAdap/testResources/DFE.txt', N)
@@ -164,7 +191,6 @@ def main():
 	else:
 		formattedGenomicElements = genomicArchitechture(sampledRegion, genomicElementKey, simLength,treeSeq =False)
 
-	config = open(args.output+'.txt', 'w')
 	output = []
 	output.append( 'initialize() {')
 	output.append(  'initializeTreeSeq();')
@@ -184,13 +210,35 @@ def main():
 	output.append( 'initializeRecombinationRate(' + str(args.rho / (4*N)) + ');' )
 	output.append( '}' )
 	output.append( '1 { sim.addSubpop("p1", ' + str(N) + ' ); }' )
-	if args.treeSeq:
-		output.append( str(generations) + ' late() {sim.treeSeqOutput("'+args.output+'.trees");}' )
-	else:
-		output.append( str(generations) + ' late() {p1.outputSample(10);}')
 
-	config.write('\n'.join(output))
-	config.close()
+	if args.demography == 'Null':
+
+		if args.treeSeq:
+			output.append( str(generations) + ' late() {sim.treeSeqOutput("'+args.output+'.trees");}' )
+		else:
+			output.append( str(generations) + ' late() {p1.outputSample(10);}')
+		config = open(args.output+'.txt', 'w')
+
+		config.write('\n'.join(output))
+		config.close()
+
+	else:
+		output.append( str(generations) + ' late() {sim.treeSeqOutput("'+args.output+'.eq.trees");}' )
+
+		generationsAdded = 0
+		for time_point in parseDemography(args.demography):
+			output.append( str(generationsAdded + generations) + ' { p1.setSubpopulationSize(' + str(int(N*time_point[0])) + '); }' )
+			generationsAdded += int(time_point[1]*N)
+
+		finalGeneration =  int(time_point[1]*N) + (generationsAdded + generations) - int(time_point[1]*N)
+		if args.treeSeq:
+			output.append( str(finalGeneration) + ' late() {sim.treeSeqOutput("'+args.output+'.neq.trees");}' )
+		else:
+			output.append( str(finalGeneration) + ' late() {p1.outputSample(10);}')
+		config = open(args.output+'.txt', 'w')
+
+		config.write('\n'.join(output))
+		config.close()
 ####
 
 #	print 'initialize() {'
