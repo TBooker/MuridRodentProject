@@ -1,5 +1,49 @@
 import numpy as np
 import pysam, argparse
+import pandas as pd
+
+##  This function grabs recombination rates from Ben's mm10 version of the castaneus map
+
+def getRecomIntervalLD(region, N):
+	length = region[2] - region[1]
+	recFile ='/home/booker/work/MouseAdap/recombinationMaps/castaneus/'+region[0]+'.rho.condensed.txt.gz'
+	rawMap = pd.read_csv(recFile, names=['chrom','lab1','lab2','pos','posRep','dot','rho','cumRho'], sep = '\t', header = None)	
+	slice = rawMap[(rawMap['pos'] > region[1]) & (rawMap['pos'] < region[2])].copy()
+	slice['adjPos'] = slice['pos'] - region[1] - 1
+	lastRate = float(rawMap.iloc[ slice.index.max()+1].rho)
+	rates = list(slice['rho']/(4*N)) + [lastRate/(4*N)]
+	positions = list(slice['adjPos']) + [length - 1]
+	return rates, positions
+
+## This function works with the recombination map encoding used by Liu et al 2014. Check their .csv files to see how others should be formatted
+def getRecomIntervalPedigree(interval):
+	map = pd.read_csv('/home/booker/work/MouseAdap/recombinationMaps/Liu/avg.map.csv') 
+	chrom = int(interval[0].split('r')[1])
+	cmap = map[map['Chr'] == chrom].copy().reset_index()
+	new = [] 
+	length = interval[2] - interval[1]
+	prev_cM = 0 
+	for index, row in cmap.iterrows(): 
+		if prev_cM != row.cM: 
+			new.append(row) 
+		prev_cM = row.cM    
+	newDF = pd.DataFrame(new) 
+	newDF['cM_diff'] = newDF['cM'].diff()  
+	newDF['bp_diff'] = newDF['Pos'].diff()/1e6
+	newDF['cM_Mb'] = newDF['cM_diff']/newDF['bp_diff'] ## cM/Mb values for each interval
+
+	# Grab the chunk of the dataframe that corresponds to the simulated interval
+	slicey = newDF[(newDF['Pos'] > interval[1]) & (newDF['Pos']  < interval[2])]
+	# If the region you're simulating doesn't contain any recorded rates, use the nearest values
+	if slicey.shape[0] ==0:
+		newDF['pos_diff'] = newDF['Pos'] - region[2]
+		newDF['pos_diff'][newDF['pos_diff'] < 0] = np.nan
+		rate = newDF.loc[newDF['pos_diff'].idxmin()].cM_Mb		#print newDF
+		return [rate], [length-1]
+	else:
+		lastRate = newDF.loc[slicey.index.max()+1]
+		return list(slicey['cM_Mb'])+[lastRate.cM_Mb], list(slicey['Pos'] - interval[1]) + [length-1] 
+	
 
 ## Here the script grabs a position from the mouse genome at random, but with respect to the fact that
 ## different chromosomes have different lengths
@@ -67,6 +111,8 @@ def DFEparser(dfeFile, N, CDSneutral = 0.333):
 
 ## This function grabs all the functional elements in the sampled region and adds the intergenic stuff 
 ## in between the features. It then returns a list of annotations that are going to be used for the 
+## Remember that the elements are coming from a BED file and so will
+## have an extra base added to the start of each item
 ## simulations in SLiM format
 ##
 
@@ -81,7 +127,9 @@ def genomicArchitechture(sampledRegion, nameDict, simLength, file = '/home/booke
 			continue
 		elif x[2] > sampledRegion[2]:
 			continue
-		elements.append([nameDict[x[3]], x[1] -sampledRegion[1], x[2]-sampledRegion[1]])
+		elements.append([nameDict[x[3]], x[1] -sampledRegion[1] + 1, x[2]-sampledRegion[1]])
+	if len(elements) <1:return
+	
 	items = []
 	for el in range(len(elements)):
 		if el == 0:
@@ -103,8 +151,10 @@ def genomicArchitechture(sampledRegion, nameDict, simLength, file = '/home/booke
 		genomicElements.append( 'initializeGenomicElement(' + str(k[0]) + ', ' + str(k[1]) +', ' + str(k[2])+ ');' )
 	return genomicElements
 
+## Parse out changes in population size and their associated sizes 
+## From a config file
+
 def parseDemography(demography):
-	print demography
 	sizes = []
 	times = []
 	for line in open(demography):
@@ -138,7 +188,8 @@ def main():
 			required = False,
 			dest = "rho",
 			type = float, 
-			help = "The population effective recombination rate. this is optional, if you specify it it will set a uniform recombination rate")
+			help = "The population effective recombination rate. this is optional, if you specify it it will set a uniform recombination rate",
+			default = -99.)
 	parser.add_argument("--DFE", 
 			required = False,
 			dest = "DFE",
@@ -171,6 +222,12 @@ def main():
 			type = int, 
 			help = "Give a random seed for reproducible runs",
 			default = 0)
+	parser.add_argument("--LD", 
+			required = False,
+			dest = "LD",
+			action = 'store_true', 
+			help = "Do you want to use the LD recombination maps? The default is to use the pedigree based maps.Both map types make pretty problematic assumptions",
+			default = False)
 	args = parser.parse_args()
 
 ## Now, using a BED file of all the functional elements in the genome, we generate the simulation architechture
@@ -184,12 +241,16 @@ def main():
 		np.random.seed(args.seed)
 
 	generations = args.N * args.generations
-	sampledRegion = positionSampler(simLength)
 	mutationTypes, genomicElementTypes, genomicElementKey = DFEparser('/home/booker/work/MouseAdap/testResources/DFE.txt', N)
-	if args.treeSeq:
-		formattedGenomicElements = genomicArchitechture(sampledRegion, genomicElementKey, simLength,treeSeq =True)
-	else:
-		formattedGenomicElements = genomicArchitechture(sampledRegion, genomicElementKey, simLength,treeSeq =False)
+
+## This while loop samples regions of genome, testing whether  
+	formattedGenomicElements = None
+	while not formattedGenomicElements:
+		sampledRegion = positionSampler(simLength)
+		if args.treeSeq:
+			formattedGenomicElements = genomicArchitechture(sampledRegion, genomicElementKey, simLength,treeSeq =True)
+		else:
+			formattedGenomicElements = genomicArchitechture(sampledRegion, genomicElementKey, simLength,treeSeq =False)
 
 	output = []
 	output.append( 'initialize() {')
@@ -207,7 +268,26 @@ def main():
 		output.append( i )
 	for i in formattedGenomicElements:
 		output.append( i )
-	output.append( 'initializeRecombinationRate(' + str(args.rho / (4*N)) + ');' )
+		
+## Let's deal with the recombination rate	
+# Now we sample the recombination rate variation for the focal region from the different recombination maps we're assuming
+
+	if args.rho == -99.:
+		print sampledRegion
+		
+		if args.LD:
+			rates, breakpoints = getRecomIntervalLD(	sampledRegion, N )
+		else:
+			rates, breakpoints = getRecomIntervalPedigree(sampledRegion)
+		
+		output.append( 'initializeRecombinationRate(c(' + ','.join(map(str,rates)) + '), c(' + ','.join(map(str,breakpoints)) + '));' )
+		#	(c(1e-7,1e-8), c(49999,99999)
+	else: 	# In this case, the recombination rate is uniform
+		output.append( 'initializeRecombinationRate(' + str(args.rho / (4*N)) + ');' )
+
+
+#
+
 	output.append( '}' )
 	output.append( '1 { sim.addSubpop("p1", ' + str(N) + ' ); }' )
 
@@ -239,31 +319,5 @@ def main():
 
 		config.write('\n'.join(output))
 		config.close()
-####
-
-#	print 'initialize() {'
-#	print 'initializeTreeSeq();'
-#
-#	print 'initializeMutationRate(' + str(theta / (4.*args.N)) + ');'
-#	print 'initializeMutationType("m0", 0.5, "f", 0.0);'
-#	for i in mutationTypes:
-#		print i
-#		
-#	if not args.treeSeq:
-#		print 'initializeGenomicElementType("g0", m0, 1.0);'
-#
-#	for i in genomicElementTypes:
-#		print i
-#	for i in formattedGenomicElements:
-#		print i
-#	print 'initializeRecombinationRate(' + str(args.rho / (4*N)) + ');'
-#	print '}'
-#	print '1 { sim.addSubpop("p1", ' + str(N) + ' ); }'
-#	if args.treeSeq:
-#		print '20000 late() {sim.treeSeqOutput("'+args.output+'.trees");}'
-#
-#	else:
-#		print '20000 late() {p1.outputSample(10);}'
-
 
 main()
