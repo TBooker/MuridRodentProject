@@ -29,8 +29,9 @@ ___
 ___
 
 
-Check out the ``run.sh`` script in this directory to see an example of how I generate a bunch of different config files.
+Check out the ``run.sh`` script in this directory to see an example of how I generate a bunch of different config files for few different scenarios.
 
+I generally script in Python2.7, so if you use Python3.x, there may be some issues with print statements. Also, you'll need numpy, pandas, pysam, pyslim and msprime.
 ___
 
 ## Notes
