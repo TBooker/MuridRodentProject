@@ -8,25 +8,30 @@ ___
 
 + Annotations of the functional elements that you want to model
 
-⋅⋅⋅I made a combined BED file that had the CDS and UTRs of protein-coding genes (making no distinction between 3' and 5' UTRs) as well as conserved non-coding elements (CNEs) gobtained by Halligan et al (2013). The simulations sample this file, and create simulation architechture based on the elements within a chosen window. Rory Craig has re-estimated the locations of CNEs in the mouse genome using a richer phylogeny than Dan used, using the mm10 mouse genome as an anchor. Those data are part of an ongoing study.
+   I made a combined BED file that had the CDS and UTRs of protein-coding genes (making no distinction between 3' and 5' UTRs) as well as conserved non-coding elements (CNEs) gobtained by Halligan et al (2013). The simulations sample this file, and create simulation architechture based on the elements within a chosen window. Rory Craig has re-estimated the locations of CNEs in the mouse genome using a richer phylogeny than Dan used, using the mm10 mouse genome as an anchor. Those data are part of an ongoing study.
  
-⋅⋅⋅To see how I generated a list of the functional elements in the mouse genome, see the file ``run.sh`` in the Annotations/ directory.
+   To see how I generated a list of the functional elements in the mouse genome, see the file ``run.sh`` in the Annotations/ directory.
 
 + Estimates of the distribution of fitness effects for each of those elements
 
-⋅⋅⋅For each of the functional element types I obtained estimates of the full DFE (both +ve and -ve fitness effects) by analysis of the site frequency spectrum. To see how that was done, check out the DFE/ directory
+   For each of the functional element types I obtained estimates of the full DFE (both +ve and -ve fitness effects) by analysis of the site frequency spectrum. To see how that was done, check out the DFE/ directory
 
+   In SLiM, functional elements can be modelled as genomicElementTypes and those get referred to as g1, g2, g3 etc. I store DFE information in a little file that encodes the type of DFE (gamma, exponential, fixed effect class) and the relative proportions of each type that occur for each the element types. I know it's annoying to have to have another config file, but it was the cleanest way I could think of doing it.
+   
+   
+   
 + Recombination rate map(s)
 
-⋅⋅⋅In the MBE paper, I used recombination estimates that I had obtained earlier for *Mus musculus castaneus* using LDhelmet, a method that infers recombination rate variation from patterns of linkage disequilibrium. Due to potential structural differences between the mm9 and mm10 reference genomes, Ben Jackson re-inferred the recombination rate landscape in *castaneus* using the same parameters, but with mm10 variant calls. Those data are in the recombinationMaps/ directory
+   In the MBE paper, I used recombination estimates that I had obtained earlier for *Mus musculus castaneus* using LDhelmet, a method that infers recombination rate variation from patterns of linkage disequilibrium. Due to potential structural differences between the mm9 and mm10 reference genomes, Ben Jackson re-inferred the recombination rate landscape in *castaneus* using the same parameters, but with mm10 variant calls. Those data are in the recombinationMaps/ directory
 
-⋅⋅⋅A tricky thing about using LD-based recombination rate estiamtes when studying selection at linked sites is that selection at linked sites affects LD and thus may bias inferred recombination rate maps. There are more traitional pedigree-based recombination rate maps available for mice, so I have added functionality for those too.
+   A tricky thing about using LD-based recombination rate estiamtes when studying selection at linked sites is that selection at linked sites affects LD and thus may bias inferred recombination rate maps. There are more traitional pedigree-based recombination rate maps available for mice, so I have added functionality for those too.
 
 ___
 
 
-Check out the ``run.sh`` script in this directory to see an example of how I generate a bunch of different config files.
+Check out the ``run.sh`` script in this directory to see an example of how I generate a bunch of different config files for few different scenarios.
 
+I generally script in Python2.7, so if you use Python3.x, there may be some issues with print statements. Also, you'll need numpy, pandas, pysam, pyslim and msprime.
 ___
 
 ## Notes
