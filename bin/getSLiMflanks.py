@@ -241,6 +241,7 @@ def main():
 	
 # prepare the bedtools command that will be performed using SubProcesss
 	bedtools_command = ['bedtools', 'subtract', '-a', args.output + '.analysisWindows.bed','-b',  args.output+'.func.bed']
+	print bedtools_command
 	tempBedfileName = args.output + '.analysisWindows.subtracted.bed'	
 	with open(tempBedfileName, "w") as outfile:
 		subprocess.call(bedtools_command, stdout= outfile)

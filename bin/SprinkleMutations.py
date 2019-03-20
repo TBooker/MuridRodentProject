@@ -27,6 +27,8 @@ def remove_mutations(ts, start, end, proportion):
 	for i in range(len(start)):
 		left = start[i]
 		right = end[i]
+		if left == right:
+			continue
 		assert(left < right)
 		if i > 0:
 			 assert(end[i - 1] <= left)
@@ -97,6 +99,7 @@ def main():
 	config = SLiM(args.input)
 
 	ts = pyslim.load(args.trees).simplify()
+	N = ts.get_sample_size()
 
 #	mut_rate = args.theta/(4.*args.N)
 

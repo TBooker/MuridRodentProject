@@ -107,6 +107,7 @@ def main():
 
 	args = parser.parse_args()
 	data = {}
+	print 'Reading in the data'
 	for i in glob.glob(args.input +'/*sfs.txt.gz'):
 		try:
 			for k in pd.read_csv(i, compression = 'gzip').values:
@@ -122,7 +123,10 @@ def main():
 	output = []
 
 #	print data['d:0-1000']
+	print 'Now performing bootstraps'
+
 	for key in sorted(data.keys()):
+		print key
 		data[key] = np.array(data[key])
 		full_sfs = np.sum(data[key], axis=0)
 		summary = np.empty([100, 5 ])
@@ -141,7 +145,7 @@ def main():
 		names.append(i)
 		names.append(i+'_lower')
 		names.append(i+'_upper')
-		
+	print 'writing output file'
 	pd.DataFrame(output, columns = names).to_csv(args.output,index = False)
 
 main()
