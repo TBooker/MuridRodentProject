@@ -1,6 +1,14 @@
-# MuridRodentProject
-This repo contains the scripts that I'm using for the current murid rodent project as well as scripts to perform the simulations from our 2018 MBE paper (Booker and Keightley).
+# Patterns of nucleotide diversity across the mouse genome
+
+This repository contains the scripts for carrying out the analyses in the project looking at patterns of diversity across the mouse genome. The paper describing this project has been submitted and is available at the following BioRXiv link:
 
 
+There are a number of parts to this projec that I have organised into different sub-directories. 
 
+1. Patterns of diversity across the mouse genome
+2. Estimating the unfolded site frequency spectrum and the DFE
+3. Simulating background selection
+4. Modelling the trough in diversity using model of selective sweeps
+
+Note, that Part 3 is a reimplementation of the code that I used for our previous paper (Booker and Keightley 2018 - MBE). In that study, we used SLiM v1.8 to model background selection and sweeps across the mouse genome. I re-implemented scripts to do that analysis using SLiM v3.x. 
 
