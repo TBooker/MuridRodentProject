@@ -3,7 +3,7 @@
 This repository contains the scripts for carrying out the analyses in the project looking at patterns of diversity across the mouse genome. The paper describing this project has been submitted and is available at the following BioRXiv link:
 
 
-There are a number of parts to this projec that I have organised into different sub-directories. 
+There are a number of parts to this project that I have organised into different sub-directories. 
 
 1. Patterns of diversity across the mouse genome
 2. Estimating the unfolded site frequency spectrum and the DFE
