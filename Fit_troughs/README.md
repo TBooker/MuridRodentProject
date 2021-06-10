@@ -8,3 +8,4 @@ The script ```bin/MouseTroughFit.py``` and ```bin/MouseTroughFitTable.py``` fit 
 
 ![](Plots/ModelFit_Cox.jpeg "Figure 4 from the manuscript")
 
+The stuff in the ```dep_pi/``` dir is deprecated data files.
