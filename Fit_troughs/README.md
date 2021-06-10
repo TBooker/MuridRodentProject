@@ -6,5 +6,5 @@ The files beginning with ```inputFiles/Mmc.*``` are the results from the mouse g
 
 The script ```bin/MouseTroughFit.py``` and ```bin/MouseTroughFitTable.py``` fit the data using non-linear least squares. Note that I wrote these scripts using Python 2.7. Often modern machines use Python3 by default, so make sure that you specify version 2.7. 
 
-![alt text](ModelFit_Cox.pdf "Figure 4 from the manuscript")
+![](Plots/ModelFit_Cox.jpeg "Figure 4 from the manuscript")
 
