@@ -38,6 +38,12 @@ ___
 
 I've recently incorporated Tree Sequence recording stuff from SLiM 3.X into my config files. Using this option speeds up the simulation like the Dickens. For illustration, during my PhD the simulations I was performing in SLiM 1.x, which went into the MBE paper, took about 40 minutes each. Performing similar simulations (500Kbp chromosomes in 1000 individuals for 10,000 generations) in SLiM 3.x with TreeSeq, takes less than a minute (!!!) and post-processing takes very little time too.  
 
-In the MBE paper (i.e. Booker and Keightley 2018), we used variant calls, functional annotations and LD-based recombination rate estimates that were generated using the mm9 version of the mouse genome. We are currently re-doing a lot of the same analyses usng mm10-based datasets, so get in touch if you want access to any of that stuff, but note that it is a work in progress. Other than the simulations, all of the raw data we used for the MBE paper was published in other studies, and I am more than happy to provide directions to that data.
+In the MBE paper (i.e. Booker and Keightley 2018), we used variant calls, functional annotations and LD-based recombination rate estimates that were generated using the mm9 version of the mouse genome. We are re-did a lot of the same analyses usng mm10-based datasets, so get in touch if you want access to any of the old stuff. Other than the simulations, all of the raw data we used for the MBE paper was published in other studies, and I am more than happy to provide directions to that data.
 
 I've tried not to hard code things into my scripts, but my laziness may have gotten the better of me in some places. I'm happy to help anyone who may want to use these scripts, so get in touch if you have any questions.
+
+
+
+## Analysis 
+An example command that I use to analyse a bunch of VCF files is:
+parallel "python ../../../bin/getSLiMflanks.py --input ../Mmc_3epoch.100.txt --vcf Mmc_3epoch.{}.neq.gz --wsize 1000 --maxLen 100000 --element g1 --output Mmc_3epoch.{}" ::: $(seq 1 2000)

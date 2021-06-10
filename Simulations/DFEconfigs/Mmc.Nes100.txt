@@ -1,0 +1,3 @@
+CDS	f	100
+CNE	f	100
+UTR	f	100
