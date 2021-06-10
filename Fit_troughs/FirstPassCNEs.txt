@@ -1,0 +1,29 @@
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 137
+    # data points      = 87
+    # variables        = 4
+    chi-square         = 0.00998558
+    reduced chi-square = 1.2031e-04
+    Akaike info crit   = -781.309341
+    Bayesian info crit = -771.445708
+[[Variables]]
+    pa:      1.0625e-04 +/- 2.6324e-05 (24.78%) (init = 0.4460459)
+    NeSa:    926.613211 +/- 146.817075 (15.84%) (init = 616)
+    pa_2:    0.00513320 +/- 0.00122274 (23.82%) (init = 0.8137157)
+    NeSa_2:  36.8313448 +/- 7.72511672 (20.97%) (init = 474)
+[[Correlations]] (unreported correlations are < 0.100)
+    C(pa, NeSa)     = -0.980
+    C(pa_2, NeSa_2) = -0.959
+    C(pa, NeSa_2)   = -0.686
+    C(NeSa, NeSa_2) =  0.592
+    C(pa, pa_2)     =  0.511
+    C(NeSa, pa_2)   = -0.429
+[[ 6.92969909e-10 -3.78607798e-03  1.64338231e-08 -1.39428153e-04]
+ [-3.78607798e-03  2.15552534e+04 -7.69510608e-02  6.71736858e+02]
+ [ 1.64338231e-08 -7.69510608e-02  1.49510346e-06 -9.06205689e-03]
+ [-1.39428153e-04  6.71736858e+02 -9.06205689e-03  5.96774284e+01]]
+estimate of pa_1 = 0.00010624879492782124
+estimate of pa_2 = 0.005133197367544973
+Estimate of Nes_1 = 463.30660542470537
+Estimate of Nes_2 = 18.415672391737502
